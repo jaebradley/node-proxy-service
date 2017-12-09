@@ -1,1 +1,1 @@
-web: npm run compile; npm run start-server
+web: npm run compile && npm run start-server
