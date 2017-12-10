@@ -27,16 +27,54 @@ const handleMovesAccessTokenRequest = (request, response) => {
       if (error.response) {
         return response.status(error.response.status).send(error.response.data);
       } else if (error.request) {
-        return response.status(400).send('Request sent but no response received');
+        return response.status(400).send({ error: 'Request sent but no response received' });
       }
 
-      return response.status(500).send('Unexpected error');
+      return response.status(500).send({ error: 'Unexpected error' });
     });
   } else {
     winston.log('error', `Invalid parameter: ${body}`);
 
-    response.status(400).send('Invalid parameter');
+    response.status(400).send({ error: 'Invalid parameter' });
   }
 };
 
-export { handleMovesAccessTokenRequest }; // eslint-disable-line import/prefer-default-export
+const handleMovesRefreshAccessTokenRequest = (request, response) => {
+  winston.log('info', `Received Moves refresh access token request at ${new Date().getTime()}`);
+
+  const { body } = request;
+
+  if (body && body.refresh_access_token) {
+    winston.log('info', `Making request to Moves API at ${new Date().getTime()}`);
+
+    axios.post('https://api.moves-app.com/oauth/v1/', {}, {
+      params: {
+        grant_type: 'refresh_token',
+        refresh_token: body.refresh_access_token,
+        client_id: process.env.MOVES_CLI_CLIENT_ID,
+        client_secret: process.env.MOVES_CLI_CLIENT_SECRET,
+      },
+    }).then((data) => {
+      winston.log('info', `Moves API Request successful response at ${new Date().getTime()}`);
+
+      return response.status(data.status).send(data.data);
+    }).catch((error) => {
+      winston.log('error', `Moves API Request error at ${new Date().getTime()}`);
+      winston.log('error', `Moves API Request error ${error}`);
+
+      if (error.response) {
+        return response.status(error.response.status).send(error.response.data);
+      } else if (error.request) {
+        return response.status(400).send({ error: 'Request sent but no response received' });
+      }
+
+      return response.status(500).send({ error: 'Unexpected error' });
+    });
+  } else {
+    winston.log('error', `Invalid parameter: ${JSON.stringify(body)}`);
+
+    response.status(400).send({ error: 'Invalid parameter' });
+  }
+};
+
+export { handleMovesAccessTokenRequest, handleMovesRefreshAccessTokenRequest };
